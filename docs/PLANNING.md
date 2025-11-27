@@ -5,7 +5,7 @@ Following Directions - 20 points max
 Project Cohesion and Motivation - 20 points max
 ---
 
-# Pokai
+# Pokepedai
 
 The general idea is a pokemon chat bot. If I wanted to make it cooler, could add an upload image to identify a pokemon, but that an extension I don't think I have to do. 
 
@@ -60,10 +60,54 @@ Need 7/9 for full points
 
 #### Improve System Prompt - Prevent Bad Actors
 
-### Part 4: Create Website 
+### Part 3: Create Website 
 
 #### Rate Limiting
 
 #### Error Handling
 
-### Part 5: CNN Pokemon Recognition from Image?? (if needed)
+### Part 4: CNN Pokemon Recognition from Image?? (if needed)
+
+## Submission Requirements
+
+- [ ] Repository
+  - Required Files (Top Level)
+    - README.md
+      - Project Title and short 1-3 description of what it is
+      - What it Does
+        - One paragraph of what ur project does
+      - Quick Start
+        - How to run your project (but short)
+      - Video Links
+        - links to demo and walkthrough
+      - Evaluation 
+        - any quantitative results, accuracy metrics, or qualitative outcomes from testing
+    - SETUP.md
+      - clear installation and setup instructions for running your project
+      - basically make it so a grader can run ur project themselves
+    - ATTRIBUTION.md
+      - AI generated code, external libraries, datasets ...
+  - Directory Structure 
+    - /src
+      - any code not in jupytr notebooks
+    - /data
+      - data files or data access scripts
+    - /models
+      - any trained models, model figures, model learning scripts
+    - /notebooks
+      - any jupytr notebooks
+    - /videos
+      - demo and walkthrough
+    - /docs
+      - any additional documentation other than the required ones
+    -   environment.yml / txt
+      - dependency management
+- [ ] Project Demo
+  - 3-5 min
+  - What project does and why it matters to a non coder
+  - Include in repo and linked in README
+- [ ] Technical Walkthrugh
+  - 5-10 min
+  - How code works / where ml concepts are applied
+  - What parts are challenging / the main technical parts
+  - Include in repo and linked in README
