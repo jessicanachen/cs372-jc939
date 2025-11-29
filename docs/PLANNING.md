@@ -17,8 +17,20 @@ The general idea is a pokemon chat bot. If I wanted to make it cooler, could add
 - [ ] (10) Deployment with rate limiting?/monitoring?/caching?, error handling, logging
 - [ ] (10) RAG system 
 - [ ] (10) Constructed data set through web scraping, manual annotation/labeling, custom curration
+- [ ] (7) System guardrails against toxicity or inappropriate use employing at least two techniques (e.g., fine-tuning, system prompt, toxicity classifier, etc.) with evidence of impact 
+- [ ] (5) Conducted ablation study demonstrating impact of at least two design choices with quantitative comparison (5 pts)
+  - basically use this to explain why you used RAG / SFT
+- [ ] (5) Compared multiple model architectures or approaches quantitatively (5 pts)
+  - bert vs sentence tokenizer
+  - which chatgpt model
 
-10 of anything else would already satisfy this
+- Built multi-turn conversation system with context management and history tracking (7 pts)??
+
+- some of these overlap with other ones (i.e. sentence embedding matching, system prompts ...)
+  - Applied prompt engineering with evaluation of multiple prompt designs (evidence: comparison table) (3 pts)
+    - In this, maybe? Applied in-context learning with few short examples or chain of thought prompting (5 pts)
+  - Used sentence embeddings for semantic similarity or retrieval (5 pts)
+  - Used or fine-tuned a transformer language model (7 pts)
 
 ### Following Direction (20)
 - [ ] (3) Submit assigment on time
