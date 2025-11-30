@@ -1,11 +1,16 @@
+# backend/chatbot_logic.py
+
 import json
 import numpy as np
 import faiss
 import os
+import logging
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 from pathlib import Path
-from dotenv import load_dotenv 
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
@@ -18,23 +23,17 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-"""## Setup"""
-
 BASE_DIR = Path(__file__).resolve().parent
 
 DATA_DIR = BASE_DIR / "data"
 INDEX_PATH = DATA_DIR / "pokemon_faiss.index"
-META_PATH  = DATA_DIR / "pokemon_metadata.json"
+META_PATH = DATA_DIR / "pokemon_metadata.json"
+
 
 def trim_history(history, max_turns: int = 8, max_chars: int = 3200):
-    """
-    history: list[{"role": "user"|"assistant", "message": str}]
-    Returns a trimmed list of turns capped by max_turns and approx token count via chars.
-    """
     trimmed = []
     total = 0
 
-    # walk newest → oldest
     for item in reversed(history):
         msg = item.get("message", "") or ""
         length = len(msg)
@@ -45,13 +44,10 @@ def trim_history(history, max_turns: int = 8, max_chars: int = 3200):
         trimmed.append(item)
         total += length
 
-    # restore chronological order
     return list(reversed(trimmed))
 
+
 def format_history(history, max_convo_chars: int = 3200):
-    """
-    Turn history into a readable conversation block for the prompt.
-    """
     lines = []
     for turn in history:
         role = turn.get("role", "user")
@@ -60,24 +56,18 @@ def format_history(history, max_convo_chars: int = 3200):
         lines.append(f"{speaker}: {msg}")
     text = "\n".join(lines)
 
-    # extra safeguard: trim extremely long conversation text
     if len(text) > max_convo_chars:
-        text = text[-max_convo_chars:]  # keep most recent part
+        text = text[-max_convo_chars:]
     return text
 
+
 def rewrite_query_with_history(query: str, history=None) -> str:
-    """
-    Use the LLM to turn the latest user query into a standalone question
-    that already incorporates any important context from the conversation.
-    """
     if history is None:
         history = []
 
-    # Reuse your existing utilities
     history = trim_history(history)
     convo = format_history(history)
 
-    # Build the rewriting prompt
     prompt = f"""You are a helpful assistant.
 
 Your task:
@@ -102,38 +92,49 @@ Latest user question:
 {query}
 """
 
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input=prompt,
-    )
-
-    rewritten = response.output_text.strip()
-    return rewritten
-
+    try:
+        logger.debug("Rewriting query with history")
+        response = client.responses.create(
+            model="gpt-5-mini",
+            input=prompt,
+        )
+        rewritten = response.output_text.strip()
+        logger.info("Rewrote query for retrieval: %s", rewritten)
+        return rewritten or query
+    except Exception:
+        logger.exception("Error while rewriting query; falling back to original query")
+        return query
 
 
 # load FAISS
+logger.info("Loading FAISS index from %s", INDEX_PATH)
 index = faiss.read_index(str(INDEX_PATH))
 with open(META_PATH, "r", encoding="utf-8") as f:
     corpus_meta = json.load(f)
 
-print(f"Loaded {len(corpus_meta)} chunks from metadata.")
-print(f"FAISS index has {index.ntotal} vectors.")
+logger.info("Loaded %d chunks from metadata; FAISS index has %d vectors.", len(corpus_meta), index.ntotal)
 
 # embedding model used for indexing
 embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+logger.info("Loaded sentence-transformer model all-MiniLM-L6-v2")
 
-"""## Retrieval (pure dense RAG)"""
 
 def dense_search(query: str, top_k: int = 50, debug: bool = False):
-    q_vec = embed_model.encode([query], convert_to_tensor=False).astype("float32")
-    D, I = index.search(q_vec, top_k)
+    logger.info("Running dense_search for query='%s' top_k=%d", query, top_k)
+
+    try:
+        q_vec = embed_model.encode([query], convert_to_tensor=False).astype("float32")
+        D, I = index.search(q_vec, top_k)
+    except Exception:
+        logger.exception("Error during dense_search (embedding or FAISS search)")
+        raise
+
     D, I = D[0], I[0]
 
     results = []
     for rank, (dist, idx) in enumerate(zip(D, I), start=1):
         idx = int(idx)
-        score = -float(dist)  # higher = more similar
+        score = -float(dist)
         doc = corpus_meta[idx]
         results.append(
             {
@@ -147,13 +148,19 @@ def dense_search(query: str, top_k: int = 50, debug: bool = False):
             text = doc.get("text", "")
             pokemon = doc.get("pokemon", "Unknown")
             section = doc.get("section", "unknown-section")
-            print(f"DENSE #{rank} | idx={idx} | score={score:.4f} | [{pokemon} — {section}]")
-            print(text[:300].replace("\n", " "))
-            if len(text) > 300:
-                print("... [truncated]")
-            print()
+            logger.debug(
+                "DENSE #%d | idx=%d | score=%.4f | [%s — %s] %s%s",
+                rank,
+                idx,
+                score,
+                pokemon,
+                section,
+                text[:300].replace("\n", " "),
+                "... [truncated]" if len(text) > 300 else "",
+            )
 
     return results
+
 
 def build_context(results, max_chars: int = 4000):
     parts = []
@@ -176,31 +183,34 @@ def build_context(results, max_chars: int = 4000):
         parts.append(chunk_str)
         total_len += len(chunk_str)
 
+    logger.debug("Built context of length %d characters", total_len)
     return "\n".join(parts)
 
-"""## Text Generation"""
 
 def answer_with_rag(query: str, history=None, k: int = 8, debug: bool = False) -> str:
-    """
-    query: latest user message
-    history: list[{"role": "user"|"assistant", "message": "..."}]
-    """
     if history is None:
         history = []
+
+    logger.info("answer_with_rag called with query='%s'", query)
 
     history = trim_history(history)
     convo = format_history(history)
 
     rag_query = rewrite_query_with_history(query=query, history=history)
 
+    try:
+        results = dense_search(query=rag_query, top_k=k, debug=debug)
+        context = build_context(results)
+    except Exception:
+        logger.exception("Retrieval failed for query='%s'", rag_query)
+        return (
+            "Sorry, I ran into a problem looking up the Pokémon data. "
+            "Please try again in a moment."
+        )
+
     if debug:
-        print("\n================== REWRITTEN QUERY USED FOR RETRIEVAL ==================\n")
-        print(rag_query)
-
-    # Retrieve relevant Pokémon chunks
-    results = dense_search(query=rag_query, top_k=k, debug=debug)
-
-    context = build_context(results)
+        logger.debug("RAG Context:\n%s", context)
+        logger.debug("Conversation history:\n%s", convo)
 
     prompt = f"""You are a helpful Pokédex assistant for all generations of Pokémon.
 Use ONLY the provided context when answering – if the context does not contain
@@ -216,16 +226,18 @@ Current user question: {query}
 Answer in a concise paragraph, including specific numbers, names, and conditions when relevant.
 """
 
-    if debug:
-        print("\n================== CONTEXT USED ==================\n")
-        print(context)
-
-        print("\n================== HISTORY ==================\n")
-        print(convo)
-
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input=prompt,
-    )
-
-    return response.output_text
+    try:
+        logger.info("Calling OpenAI model for generation")
+        response = client.responses.create(
+            model="gpt-5-mini",
+            input=prompt,
+        )
+        reply = response.output_text
+        logger.info("Successfully generated model reply")
+        return reply
+    except Exception:
+        logger.exception("OpenAI generation failed")
+        return (
+            "Sorry, I had an internal error while generating this answer. "
+            "Please try again shortly."
+        )

@@ -4,5 +4,6 @@
 
 **RAG Setup**
 - The base setup of the rag was copied by a project I made for a different class on terraria: https://github.com/jess-che/terraria-rag/blob/main/discord_bot.py
-- hybrid retrieval: https://superlinked.com/vectorhub/articles/optimizing-rag-with-hybrid-search-reranking
-  - tweaked with chatgpt, because keyword matching strugles with mispelling
+
+Rate Limiter
+- https://stackoverflow.com/questions/65491184/ratelimit-in-fastapi
