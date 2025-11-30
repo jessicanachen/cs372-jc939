@@ -1,6 +1,8 @@
 "use client";
 
 import type { ChatSession } from "@/types/chat";
+import type { PokemonEntry } from "@/lib/pokemonIcons";
+import ChatIconPicker from "./ChatIconPicker";
 
 type ChatSidebarProps = {
     sessions: ChatSession[];
@@ -8,6 +10,7 @@ type ChatSidebarProps = {
     onSelectSession: (id: string) => void;
     onNewSession: () => void;
     onDeleteSession: (id: string) => void;
+    onChangeIcon: (sessionId: string, entry: PokemonEntry | null) => void; // NEW
 };
 
 export default function ChatSidebar({
@@ -16,6 +19,8 @@ export default function ChatSidebar({
     onSelectSession,
     onNewSession,
     onDeleteSession,
+    onChangeIcon,
+
 }: ChatSidebarProps) {
     return (
         <aside className="flex flex-col w-60 border-r border-slate-800 bg-slate-950/60">
@@ -62,20 +67,29 @@ export default function ChatSidebar({
                                     : "text-slate-200 hover:bg-slate-800/80 border border-transparent"
                                 }`}
                         >
-                            <div className="flex-1 mr-2">
-                                <p className="font-medium truncate">{preview}</p>
-                                <p className="text-[0.65rem] text-slate-500 truncate">
-                                    {new Date(session.updatedAt).toLocaleString(undefined, {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
-                                </p>
+                            {/* LEFT: icon + text */}
+                            <div className="flex items-center gap-2 mr-2">
+                                <ChatIconPicker
+                                    dexNumber={session.iconDexNumber ?? null}
+                                    name={session.iconName ?? null}
+                                    onChange={(entry) => onChangeIcon(session.id, entry)}
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium truncate">{preview}</p>
+                                    <p className="text-[0.65rem] text-slate-500 truncate">
+                                        {new Date(session.updatedAt).toLocaleString(undefined, {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </p>
+                                </div>
                             </div>
 
+                            {/* RIGHT: delete button */}
                             <button
                                 type="button"
                                 onClick={(e) => {
-                                    e.stopPropagation(); 
+                                    e.stopPropagation();
                                     onDeleteSession(session.id);
                                 }}
                                 className="text-[0.65rem] text-slate-500 opacity-0 group-hover:opacity-100 hover:text-red-400 px-1"
@@ -86,6 +100,7 @@ export default function ChatSidebar({
                         </div>
                     );
                 })}
+
 
             </div>
         </aside>

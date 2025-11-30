@@ -21,6 +21,7 @@ export default function ChatLayout() {
         selectSession,
         clearActiveSession,
         deleteSession,
+        updateSessionIcon,
     } = useChatSessions();
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -37,6 +38,7 @@ export default function ChatLayout() {
                 onSelectSession={selectSession}
                 onNewSession={createNewSession}
                 onDeleteSession={deleteSession}
+                onChangeIcon={updateSessionIcon}
             />
 
             {/* Main chat column */}

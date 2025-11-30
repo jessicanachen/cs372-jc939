@@ -11,6 +11,8 @@ import {
 import type { ChatSession, Message } from "@/types/chat";
 import { buildHistoryPayload } from "@/lib/history";
 import { chatClient } from "@/lib/chatClient";
+import type { PokemonEntry } from "@/lib/pokemonIcons";
+import { getRandomPokemonDex, dexToPokemonName } from "@/lib/pokemonIcons";
 
 const STORAGE_KEY = "pokepedia-chat-sessions-v1";
 
@@ -19,12 +21,15 @@ const STORAGE_KEY = "pokepedia-chat-sessions-v1";
  */
 function createEmptySession(): ChatSession {
     const now = new Date().toISOString();
+    const dex = getRandomPokemonDex();
     return {
         id: `session-${now}-${Math.random().toString(36).slice(2, 10)}`,
         title: "New chat",
         messages: [],
         createdAt: now,
         updatedAt: now,
+        iconDexNumber: dex,
+        iconName: dexToPokemonName(dex),
     };
 }
 
@@ -32,7 +37,7 @@ export function useChatSessions() {
     // session information
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-    
+
     // stuff per chat 
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -257,6 +262,25 @@ export function useChatSessions() {
         [activeSessionId]
     );
 
+    const updateSessionIcon = useCallback(
+        (sessionId: string, entry: PokemonEntry | null) => {
+            setSessions((prev) =>
+                prev.map((s) =>
+                    s.id === sessionId
+                        ? {
+                            ...s,
+                            iconDexNumber: entry?.dex ?? null,
+                            iconName: entry?.name ?? null,
+                            updatedAt: new Date().toISOString(),
+                        }
+                        : s
+                )
+            );
+        },
+        []
+    );
+
+
     return {
         initialized,
         sessions,
@@ -271,5 +295,6 @@ export function useChatSessions() {
         selectSession,
         clearActiveSession,
         deleteSession,
+        updateSessionIcon,
     };
 }

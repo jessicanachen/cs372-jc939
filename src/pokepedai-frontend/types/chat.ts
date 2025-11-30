@@ -12,4 +12,7 @@ export interface ChatSession {
   messages: Message[];
   createdAt: string;
   updatedAt: string;
+
+  iconDexNumber?: number | null;
+  iconName?: string | null;
 }
