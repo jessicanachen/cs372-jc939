@@ -6,6 +6,21 @@ from .chatbot_logic import answer_with_rag
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "https://cs372-jc939.vercel.app",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],   # or ["GET", "POST", "OPTIONS"]
+    allow_headers=["*"],
+)
+
 class ChatMessage(BaseModel):
     role: Literal["user", "bot"]
     message: str
