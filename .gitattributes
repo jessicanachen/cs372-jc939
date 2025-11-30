@@ -1,2 +1,2 @@
-*.json filter=lfs diff=lfs merge=lfs -text
+pokemon_metadata.json filter=lfs diff=lfs merge=lfs -text
 *.index filter=lfs diff=lfs merge=lfs -text
