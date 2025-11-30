@@ -10,6 +10,13 @@ type Message = {
   content: string;
 };
 
+// Decide API base URL based on environment
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (process.env.NODE_ENV === "production"
+    ? "https://pokepedai-backend-api-405120827006.us-east1.run.app"
+    : "http://localhost:8000"); // change to 8080 if your local backend runs there
+
 export default function HomePage() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -38,32 +45,39 @@ export default function HomePage() {
       content: trimmed,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
     setInput("");
     setIsLoading(true);
 
     try {
-      // TODO: Replace this fake reply with a real API call to your backend.
-      // Example:
-      //
-      // const res = await fetch("/api/chat", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ message: trimmed }),
-      // });
-      // const data = await res.json();
-      // const assistantText = data.reply;
+      const res = await fetch(`${API_BASE_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          // if your backend doesn't use history yet, you can keep this as []
+          history: [],
+          message: trimmed,
+        }),
+      });
 
-      const assistantText = await fakeAssistantReply(trimmed);
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
+      const data = await res.json();
 
       const assistantMessage: Message = {
         id: Date.now() + 1,
         role: "assistant",
-        content: assistantText,
+        content: data.reply ?? "Sorry, I didn't get a response.",
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
+      console.error(err);
       const errorMessage: Message = {
         id: Date.now() + 2,
         role: "assistant",
@@ -79,7 +93,6 @@ export default function HomePage() {
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      // Manually submit the form
       const form = e.currentTarget.form;
       if (form) {
         form.requestSubmit();
@@ -146,6 +159,7 @@ export default function HomePage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask a question or say hi..."
+                maxLength={500}
               />
               <span className="pointer-events-none absolute bottom-2.5 right-3 text-[0.65rem] text-slate-500">
                 {input.length}/500
@@ -174,13 +188,6 @@ export default function HomePage() {
       </div>
     </main>
   );
-}
-
-// Simple fake assistant reply for now.
-// Replace this with your actual model / API call.
-async function fakeAssistantReply(userMessage: string): Promise<string> {
-  await new Promise((resolve) => setTimeout(resolve, 600)); // mimic latency
-  return `You said: “${userMessage}”\n\nThis is a placeholder response. Wire me up to your real /api/chat endpoint to get model answers.`;
 }
 
 type MessageBubbleProps = {
