@@ -26,6 +26,92 @@ DATA_DIR = BASE_DIR / "data"
 INDEX_PATH = DATA_DIR / "pokemon_faiss.index"
 META_PATH  = DATA_DIR / "pokemon_metadata.json"
 
+def trim_history(history, max_turns: int = 8, max_chars: int = 3200):
+    """
+    history: list[{"role": "user"|"assistant", "message": str}]
+    Returns a trimmed list of turns capped by max_turns and approx token count via chars.
+    """
+    trimmed = []
+    total = 0
+
+    # walk newest → oldest
+    for item in reversed(history):
+        msg = item.get("message", "") or ""
+        length = len(msg)
+
+        if len(trimmed) >= max_turns or total + length > max_chars:
+            break
+
+        trimmed.append(item)
+        total += length
+
+    # restore chronological order
+    return list(reversed(trimmed))
+
+def format_history(history, max_convo_chars: int = 3200):
+    """
+    Turn history into a readable conversation block for the prompt.
+    """
+    lines = []
+    for turn in history:
+        role = turn.get("role", "user")
+        speaker = "User" if role == "user" else "Assistant"
+        msg = turn.get("message", "")
+        lines.append(f"{speaker}: {msg}")
+    text = "\n".join(lines)
+
+    # extra safeguard: trim extremely long conversation text
+    if len(text) > max_convo_chars:
+        text = text[-max_convo_chars:]  # keep most recent part
+    return text
+
+def rewrite_query_with_history(query: str, history=None) -> str:
+    """
+    Use the LLM to turn the latest user query into a standalone question
+    that already incorporates any important context from the conversation.
+    """
+    if history is None:
+        history = []
+
+    # Reuse your existing utilities
+    history = trim_history(history)
+    convo = format_history(history)
+
+    # Build the rewriting prompt
+    prompt = f"""You are a helpful assistant.
+
+Your task:
+Given the conversation so far and the user's latest question, 
+rewrite ONLY the latest question so that it becomes a fully 
+self-contained, standalone question that includes any necessary 
+context from the conversation.
+
+Rules:
+- Do NOT answer the question.
+- Do NOT add new information.
+- Do NOT change the question if no extra informatin is needed.
+- Simply restate the user's latest question so that it can be 
+  understood on its own.
+- It is already understood to be about Pokemon.
+- Return ONLY the rewritten question, nothing else.
+
+Conversation so far:
+{convo or "(no previous conversation)"}
+
+Latest user question:
+{query}
+"""
+
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=prompt,
+    )
+
+    rewritten = response.output_text.strip()
+    return rewritten
+
+
+
 # load FAISS
 index = faiss.read_index(str(INDEX_PATH))
 with open(META_PATH, "r", encoding="utf-8") as f:
@@ -94,9 +180,25 @@ def build_context(results, max_chars: int = 4000):
 
 """## Text Generation"""
 
-def answer_with_rag(query: str, k: int = 8, debug: bool = False) -> str:
-    # pure dense retrieval
-    results = dense_search(query=query, top_k=k, debug=debug)
+def answer_with_rag(query: str, history=None, k: int = 8, debug: bool = False) -> str:
+    """
+    query: latest user message
+    history: list[{"role": "user"|"assistant", "message": "..."}]
+    """
+    if history is None:
+        history = []
+
+    history = trim_history(history)
+    convo = format_history(history)
+
+    rag_query = rewrite_query_with_history(query=query, history=history)
+
+    if debug:
+        print("\n================== REWRITTEN QUERY USED FOR RETRIEVAL ==================\n")
+        print(rag_query)
+
+    # Retrieve relevant Pokémon chunks
+    results = dense_search(query=rag_query, top_k=k, debug=debug)
 
     context = build_context(results)
 
@@ -104,16 +206,22 @@ def answer_with_rag(query: str, k: int = 8, debug: bool = False) -> str:
 Use ONLY the provided context when answering – if the context does not contain
 the answer, say you don't know.
 
+Conversation so far:
+{convo or "(no previous conversation)"}
+
 Context:
 {context}
 
-User question: {query}
+Current user question: {query}
 Answer in a concise paragraph, including specific numbers, names, and conditions when relevant.
 """
 
     if debug:
         print("\n================== CONTEXT USED ==================\n")
         print(context)
+
+        print("\n================== HISTORY ==================\n")
+        print(convo)
 
     response = client.responses.create(
         model="gpt-5-mini",

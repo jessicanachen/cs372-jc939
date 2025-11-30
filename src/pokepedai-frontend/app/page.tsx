@@ -10,21 +10,18 @@ type Message = {
   content: string;
 };
 
+const MAX_HISTORY_MESSAGES = 8;
+const MAX_HISTORY_CHARS = 3200;  
+
 // Decide API base URL based on environment
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   (process.env.NODE_ENV === "production"
     ? "https://pokepedai-backend-api-405120827006.us-east1.run.app"
-    : "http://localhost:8000"); // change to 8080 if your local backend runs there
+    : "http://localhost:8080"); // change to 8080 if your local backend runs there
 
 export default function HomePage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      role: "assistant",
-      content: "Hey! I’m your friendly chatbot. Ask me anything to get started 🤖",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -45,21 +42,26 @@ export default function HomePage() {
       content: trimmed,
     };
 
-    const nextMessages = [...messages, userMessage];
-    setMessages(nextMessages);
+    // UI state: show the new user message
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
+      // 👇 Build history for the backend from *previous* messages only
+      const historyForApi = messages.map((m) => ({
+        role: m.role,          // "user" | "assistant"
+        message: m.content,    // backend expects "message"
+      }));
+
       const res = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // if your backend doesn't use history yet, you can keep this as []
-          history: [],
-          message: trimmed,
+          history: historyForApi,
+          message: trimmed, // the *current* user message
         }),
       });
 
@@ -89,6 +91,7 @@ export default function HomePage() {
       setIsLoading(false);
     }
   };
+
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -133,9 +136,18 @@ export default function HomePage() {
 
         {/* Messages */}
         <section className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          {/* One-time greeting that is NOT saved in state/history */}
+          {messages.length === 0 && !isLoading && (
+            <MessageBubble
+              role="assistant"
+              content="Hey! I’m your friendly chatbot. Ask me anything to get started 🤖"
+            />
+          )}
+
           {messages.map((m) => (
             <MessageBubble key={m.id} role={m.role} content={m.content} />
           ))}
+
           {isLoading && (
             <div className="flex gap-2 items-center text-xs text-slate-400 px-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
@@ -144,6 +156,7 @@ export default function HomePage() {
           )}
           <div ref={messagesEndRef} />
         </section>
+
 
         {/* Input */}
         <footer className="border-t border-slate-800 px-4 py-3">
