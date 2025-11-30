@@ -48,11 +48,15 @@ export default function HomePage() {
     setIsLoading(true);
 
     try {
-      // 👇 Build history for the backend from *previous* messages only
+      // Build history for the backend from *previous* messages only
       const historyForApi = messages.map((m) => ({
-        role: m.role,          // "user" | "assistant"
-        message: m.content,    // backend expects "message"
+        role: m.role,       // "user" | "assistant"
+        message: m.content, // backend expects "message"
       }));
+
+      // Add a timeout so requests don't hang forever
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 60000); // 1 min
 
       const res = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
@@ -63,28 +67,72 @@ export default function HomePage() {
           history: historyForApi,
           message: trimmed, // the *current* user message
         }),
+        signal: controller.signal,
+      }).finally(() => {
+        window.clearTimeout(timeoutId);
       });
 
-      if (!res.ok) {
-        throw new Error(`Request failed with status ${res.status}`);
+      let data: any = null;
+      try {
+        // Try to parse JSON even on non-OK responses so we can read { "error": ... }
+        data = await res.json();
+      } catch {
+        // ignore JSON parse errors, we'll fall back to generic messaging
       }
 
-      const data = await res.json();
+      if (!res.ok) {
+        // Use backend error fields if available – matches your FastAPI handlers
+        const backendErrorMessage =
+          data?.error ||
+          data?.detail ||
+          data?.message ||
+          (res.status >= 500
+            ? "The server had an internal error. Please try again in a moment."
+            : "I couldn’t process that request. Please try again.");
 
+        const assistantMessage: Message = {
+          id: Date.now() + 1,
+          role: "assistant",
+          content: backendErrorMessage,
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+        return;
+      }
+
+      // Successful response – use the model's reply or fallback
       const assistantMessage: Message = {
         id: Date.now() + 1,
         role: "assistant",
-        content: data.reply ?? "Sorry, I didn't get a response.",
+        content:
+          (data?.reply as string | undefined)?.trim() ||
+          "Sorry, I didn't get a response.",
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
+
+      let friendlyMessage =
+        "Oops, something went wrong while generating a response. Please try again.";
+
+      // Timeout
+      if ((err as any).name === "AbortError") {
+        friendlyMessage =
+          "Hmm, the server is taking too long to respond. Please try again in a moment.";
+      } else if (err instanceof TypeError && err.message === "Failed to fetch") {
+        // Typical network error for fetch
+        friendlyMessage =
+          "I couldn’t reach the server. Please check your connection and try again.";
+      } else if (err instanceof Error && err.message) {
+        // If you ever `throw new Error("...")` above, it ends up here
+        friendlyMessage = err.message;
+      }
+
       const errorMessage: Message = {
         id: Date.now() + 2,
         role: "assistant",
-        content:
-          "Oops, something went wrong while generating a response. Please try again.",
+        content: friendlyMessage,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
