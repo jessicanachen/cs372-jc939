@@ -7,3 +7,5 @@
 
 Rate Limiter
 - https://stackoverflow.com/questions/65491184/ratelimit-in-fastapi
+
+- recursive rag: https://ai.plainenglish.io/recursive-contextual-retrieval-a-next-generation-rag-algorithm-f42a263ccfd3
