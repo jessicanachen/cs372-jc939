@@ -1,7 +1,4 @@
-# backend/chatbot_logic.py
-
 import json
-import numpy as np
 import faiss
 import os
 import logging
@@ -10,8 +7,11 @@ from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
 
+from .history_utils import trim_history, format_history
+
 logger = logging.getLogger(__name__)
 
+# env setup for api key
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
 load_dotenv(ROOT_DIR / ".env")
@@ -23,45 +23,34 @@ if not OPENAI_API_KEY:
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+# resolve paths for data files
 BASE_DIR = Path(__file__).resolve().parent
 
 DATA_DIR = BASE_DIR / "data"
 INDEX_PATH = DATA_DIR / "pokemon_faiss.index"
 META_PATH = DATA_DIR / "pokemon_metadata.json"
 
+# load FAISS
+logger.info("Loading FAISS index from %s", INDEX_PATH)
+index = faiss.read_index(str(INDEX_PATH))
+with open(META_PATH, "r", encoding="utf-8") as f:
+    corpus_meta = json.load(f)
 
-def trim_history(history, max_turns: int = 8, max_chars: int = 3200):
-    trimmed = []
-    total = 0
+logger.info(
+    "Loaded %d chunks from metadata; FAISS index has %d vectors.",
+    len(corpus_meta),
+    index.ntotal,
+)
 
-    for item in reversed(history):
-        msg = item.get("message", "") or ""
-        length = len(msg)
-
-        if len(trimmed) >= max_turns or total + length > max_chars:
-            break
-
-        trimmed.append(item)
-        total += length
-
-    return list(reversed(trimmed))
-
-
-def format_history(history, max_convo_chars: int = 3200):
-    lines = []
-    for turn in history:
-        role = turn.get("role", "user")
-        speaker = "User" if role == "user" else "Assistant"
-        msg = turn.get("message", "")
-        lines.append(f"{speaker}: {msg}")
-    text = "\n".join(lines)
-
-    if len(text) > max_convo_chars:
-        text = text[-max_convo_chars:]
-    return text
+# embedding model used for indexing
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+logger.info("Loaded sentence-transformer model all-MiniLM-L6-v2")
 
 
-def rewrite_query_with_history(query: str, history=None) -> str:
+def rewrite_query_with_history(query, history):
+    '''
+    First chatbot, rewrites query with context to be input into RAG.
+    '''
     if history is None:
         history = []
 
@@ -100,26 +89,16 @@ Latest user question:
         )
         rewritten = response.output_text.strip()
         logger.info("Rewrote query for retrieval: %s", rewritten)
-        return rewritten or query
+        return rewritten
     except Exception:
         logger.exception("Error while rewriting query; falling back to original query")
         return query
 
 
-# load FAISS
-logger.info("Loading FAISS index from %s", INDEX_PATH)
-index = faiss.read_index(str(INDEX_PATH))
-with open(META_PATH, "r", encoding="utf-8") as f:
-    corpus_meta = json.load(f)
-
-logger.info("Loaded %d chunks from metadata; FAISS index has %d vectors.", len(corpus_meta), index.ntotal)
-
-# embedding model used for indexing
-embed_model = SentenceTransformer("all-MiniLM-L6-v2")
-logger.info("Loaded sentence-transformer model all-MiniLM-L6-v2")
-
-
-def dense_search(query: str, top_k: int = 50, debug: bool = False):
+def dense_search(query, top_k: int = 50, debug: bool = False):
+    '''
+    Return top k document matches with RAG retrieval.
+    '''
     logger.info("Running dense_search for query='%s' top_k=%d", query, top_k)
 
     try:
@@ -161,20 +140,22 @@ def dense_search(query: str, top_k: int = 50, debug: bool = False):
 
     return results
 
-
 def build_context(results, max_chars: int = 4000):
+    '''
+    Build context to be input into chat prompt from retrieved RAG documents.
+    '''
     parts = []
     total_len = 0
 
     for r in results:
         m = r["doc"]
-        header = f"[{m.get('pokemon', 'Unknown')} — {m.get('section', 'unknown-section')}]"
-        desc = m.get("description") or ""
+        if m.get("pokemon"):
+            header = f"[{m.get('pokemon')} — {m.get('section')}]"
+        else:
+            header = f"[{m.get('section')}]"
         text = m.get("text") or ""
 
         chunk_str = header + "\n"
-        if desc:
-            chunk_str += desc + "\n"
         chunk_str += text + "\n"
 
         if total_len + len(chunk_str) > max_chars:
@@ -187,7 +168,7 @@ def build_context(results, max_chars: int = 4000):
     return "\n".join(parts)
 
 
-def answer_with_rag(query: str, history=None, k: int = 8, debug: bool = False) -> str:
+def answer_with_rag(query, history=None, k: int = 8, debug: bool = False) -> str:
     if history is None:
         history = []
 
@@ -225,6 +206,12 @@ Context:
 Current user question: {query}
 Answer in a concise paragraph, including specific numbers, names, and conditions when relevant.
 """
+
+    print("\n================== CONTEXT USED ==================\n")
+    print(context)
+
+    print("\n================== HISTORY ==================\n")
+    print(convo)
 
     try:
         logger.info("Calling OpenAI model for generation")
