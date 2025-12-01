@@ -26,7 +26,7 @@ export class ChatClient {
     async sendMessage(
         history: HistoryPayloadItem[],
         message: string,
-        timeoutMs: number = 60000
+        timeoutMs: number = 300000
     ): Promise<ChatClientResult> {
         // timeout
         const controller = new AbortController();

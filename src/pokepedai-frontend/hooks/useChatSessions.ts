@@ -171,7 +171,7 @@ export function useChatSessions() {
                         "Hmm, the server is taking too long to respond. Please try again in a moment.";
                 } else if (err instanceof TypeError && err.message === "Failed to fetch") {
                     friendlyMessage =
-                        "I couldn’t reach the server. Please check your connection and try again.";
+                        "I couldn't reach the server. Please check your connection and try again.";
                 } else if (err instanceof Error && err.message) {
                     friendlyMessage = err.message;
                 }
