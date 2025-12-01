@@ -84,7 +84,7 @@ Latest user question:
     try:
         logger.debug("Rewriting query with history")
         response = client.responses.create(
-            model="gpt-5-mini",
+            model="gpt-4.1-mini",
             input=prompt,
         )
         rewritten = response.output_text.strip()
@@ -269,7 +269,7 @@ in a factual and specific way?
 
         try:
             suff_resp = client.responses.create(
-                model="gpt-5-mini",
+                model="gpt-4.1-mini",
                 input=suff_prompt,
             )
             suff_text = (suff_resp.output_text or "").strip()
@@ -329,7 +329,7 @@ Output format:
 
         try:
             refine_resp = client.responses.create(
-                model="gpt-5-mini",
+                model="gpt-4.1-mini",
                 input=refine_prompt,
             )
             refine_text = (refine_resp.output_text or "").strip()
@@ -440,7 +440,7 @@ Answer in a concise paragraph, including specific numbers, names, and conditions
     try:
         logger.info("Calling OpenAI model for generation")
         response = client.responses.create(
-            model="gpt-5-mini",
+            model="gpt-4.1-mini",
             input=prompt,
         )
         reply = response.output_text
