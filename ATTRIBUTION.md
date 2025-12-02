@@ -25,6 +25,7 @@ ENV PYTHONUNBUFFERED=1
 - These two lines were generated from ChatGPT but included as after looking them up online they do not seem to conflict and only provide helpful things if needed (stdout and stderr sent strate to terminal and the first one is fine since I don't need to spawn any python files so the container can be read only)
 - This is also true for the general docker file setup found in the root, although I did use ChatGPT to make sure that node and npm were properly installed for frontend.
 - The rate limiter I decided to use was an answer found on [stack overflow](https://stackoverflow.com/questions/65491184/ratelimit-in-fastapi) by SMILE- P, since I did not want to use another service (database), I decided to go with this option as since my rate limit window is in minutes, the data does not need to be stored for long. 
+- For the prompting, last year one of my friends intern project, dealt a lot with prompt engineering. As mentioned by the slides, prompt engineering is a lot based on what has worked before, so I consulted his help when writing the prompts for the model.
 
 **Pokepedai-Frontend**
 - The initial look and setup was done by GPT in the past revisions when it was one `page.tsx` of code. This is because the web app I wanted to do quickly just to ensure that the frontend and backend could talk to each other correctly.

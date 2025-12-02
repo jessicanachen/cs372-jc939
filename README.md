@@ -1,11 +1,11 @@
 # Pokepedai
 *Jessica Chen*
 
-1-3 sentence description of what ur project does
+[TODO]
 
 ## What it Does
 
-One paragraph of what ur project Does
+What the project does is it serves as an alternate way people can retrieve pokemon information in game. [TODO]
 
 ## Quick Start
 
@@ -17,26 +17,8 @@ For more detailed information on how to run the project locally consult [SETUP.m
 ## Video Links
 
 - [Demo]()
--  [Technical Walkthrough]()
+- [Technical Walkthrough]()
 
 ## Evaluation
 
-### Base RAG Evaluation 
-
-### Prompt Engineering: Generation Prompt 
-
-#### Answer Qualtiy
-
-#### Inappropriate Use
-
-### Fine Tuning: Generation Prompt
-
-#### Answer Qualtiy
-
-#### Inappropriate Use
-
-### Multiturn Conversation Evaluation
-
-### Prompt Engineering: Multiturn Conversation 
-
-### Fine Tuning: Multiturn Conversation 
+[TODO]
