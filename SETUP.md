@@ -4,7 +4,7 @@
 
 The easiest way to test the system is to test the deployment on the web app. This web app already has the project running and connected to the external APIs and services for the backend. 
 
-The web app can be accessed here: cs372-jc939.vercel.app
+The web app can be accessed here: https://cs372-jc939.vercel.app
 You can also directly access and call the backend endpoints directly here: https://pokepedai-backend-api-405120827006.us-east1.run.app/docs (docs gives you a way to call the chat endpoint inside the web without having to curl/call it with some other application).
 
 ## Testing the System - Locally
