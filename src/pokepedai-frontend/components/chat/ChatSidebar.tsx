@@ -27,27 +27,27 @@ export default function ChatSidebar({
 }: ChatSidebarProps) {
   return (
     <aside
-      className={`flex flex-col w-60 border-r border-slate-800 bg-slate-950/90
+      className={`flex flex-col w-64 border-r-[4px] border-black bg-[#f5f3e7] text-[#111111]
                 transform transition-transform duration-200 ease-out
                 fixed inset-y-0 left-0 z-30 max-w-[80vw]
                 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <div className="flex items-center justify-between px-4 py-3 border-b-[3px] border-black bg-[#e7e3d4]">
+        <h2 className="text-[0.7rem] font-bold uppercase tracking-[0.18em]">
           Pokepedai Chats
         </h2>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onNewSession}
-            className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[0.7rem] font-medium text-slate-100 hover:border-red-500 hover:text-red-300"
+            className="border-[2px] border-black bg-[#f5f3e7] px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.15em] shadow-[2px_2px_0_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
           >
-            + New
+            New
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="text-[0.8rem] text-slate-500 hover:text-red-400"
+            className="text-[0.8rem]"
             aria-label="Close chat list"
           >
             ✕
@@ -55,7 +55,7 @@ export default function ChatSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-thin scrollbar-thumb-neutral-500 scrollbar-track-transparent">
         {sessions.map((session) => {
           const isActive = session.id === activeSessionId;
           const lastMessage =
@@ -84,10 +84,10 @@ export default function ChatSidebar({
                   onClose();
                 }
               }}
-              className={`group flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-xs cursor-pointer ${
+              className={`group flex w-full items-center justify-between px-2.5 py-2 text-left text-[0.7rem] cursor-pointer border-[2px] border-black ${
                 isActive
-                  ? "bg-red-500/15 text-red-100 border border-red-500/50"
-                  : "text-slate-200 hover:bg-slate-800/80 border border-transparent"
+                  ? "bg-[#d8d4c4]"
+                  : "bg-[#f5f3e7] hover:bg-[#e4e0d0]"
               }`}
             >
               <div className="flex items-center gap-2 mr-2 w-[80%]">
@@ -97,8 +97,8 @@ export default function ChatSidebar({
                   onChange={(entry) => onChangeIcon(session.id, entry)}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{preview}</p>
-                  <p className="text-[0.65rem] text-slate-500 truncate">
+                  <p className="font-semibold truncate">{preview}</p>
+                  <p className="text-[0.6rem] text-neutral-600 truncate">
                     {new Date(session.updatedAt).toLocaleString(undefined, {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -113,7 +113,7 @@ export default function ChatSidebar({
                   e.stopPropagation();
                   onDeleteSession(session.id);
                 }}
-                className="shrink-0 text-[0.65rem] text-slate-500 opacity-0 group-hover:opacity-100 hover:text-red-400 px-1"
+                className="shrink-0 text-[0.65rem] opacity-0 group-hover:opacity-100 hover:text-red-600 px-1"
                 aria-label="Delete chat"
               >
                 ✕

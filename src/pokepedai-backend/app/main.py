@@ -131,7 +131,7 @@ def register_routes(app):
 
         try:
             history = [m.model_dump() for m in body.history]
-            reply = answer_with_rag(query=body.message, history=history, debug=True)
+            reply = answer_with_rag(query=body.message, history=history, debug=False)
             logger.info("Successfully generated reply for /chat")
             return ChatResponse(reply=reply)
         except HTTPException:

@@ -35,10 +35,10 @@ export default function ChatLayout() {
   const closeSidebar = () => setIsSidebarOpen(false);
 
   return (
-    <div className="relative w-full max-w-4xl h-[80vh] flex rounded-3xl border border-slate-800 bg-slate-900/70 shadow-2xl backdrop-blur overflow-hidden">
+    <div className="relative mx-auto flex h-full min-h-screen w-full flex-col font-mono text-[#111111] bg-[#e7e3d4] border-[6px] border-black shadow-[8px_8px_0_rgba(0,0,0,0.75)] overflow-hidden">
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/50"
+          className="fixed inset-0 z-20 bg-black/40"
           onClick={closeSidebar}
           aria-hidden="true"
         />
@@ -61,78 +61,43 @@ export default function ChatLayout() {
         onClose={closeSidebar}
       />
 
-      <div className="flex flex-1 flex-col min-w-0">
-        <header className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 hover:border-red-500 hover:text-red-300"
-              aria-label="Toggle chat list"
-              aria-pressed={isSidebarOpen}
-            >
-              <span className="sr-only">Toggle chat list</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                className="h-5 w-5"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
+      {/* Top “battle screen” title bar */}
+      <header className="flex items-center justify-between border-b-[3px] border-black bg-[#f0ecde] px-4 py-2 text-[0.7rem] uppercase tracking-[0.25em]">
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="border-[2px] border-black bg-[#e7e3d4] px-2 py-1 text-[0.6rem] font-bold shadow-[2px_2px_0_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+          aria-label="Toggle chat list"
+        >
+          Menu
+        </button>
 
-            {/* Poké Ball–style logo */}
-            <div className="relative h-9 w-9 rounded-full border-2 border-slate-800 bg-gradient-to-b from-red-500 to-white flex items-center justify-center overflow-hidden">
-              <div className="absolute inset-x-0 h-[2px] bg-slate-900" />
-              <div className="relative h-3 w-3 rounded-full border-[2px] border-slate-900 bg-slate-100" />
-            </div>
+        <div className="flex flex-col items-center leading-none">
+          <span className="text-xs font-bold tracking-[0.25em]">
+            POKEPEDAI BATTLE SCREEN
+          </span>
+          <span className="mt-1 text-[0.6rem] normal-case tracking-normal">
+            What will you ask?
+          </span>
+        </div>
 
-            <div>
-              <h1 className="text-sm font-semibold text-slate-50">
-                Pokepedai • Pokémon Chatbot
-              </h1>
-              <p className="text-xs text-slate-400 flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                Online • ask me anything about Pokémon
-              </p>
-            </div>
-          </div>
+        <button
+          type="button"
+          onClick={clearActiveSession}
+          disabled={!initialized || !activeSession}
+          className="border-[2px] border-black bg-[#e7e3d4] px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.15em] shadow-[2px_2px_0_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+        >
+          Clear
+        </button>
+      </header>
 
-          <div className="flex items-center gap-3 text-xs text-slate-400">
-            <div className="hidden sm:flex items-center gap-2">
-              <span>Press</span>
-              <kbd className="rounded-md border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[0.65rem] font-medium">
-                Enter
-              </kbd>
-              <span>to send</span>
-              <span>•</span>
-              <span>Shift + Enter = newline</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={clearActiveSession}
-              disabled={!initialized || !activeSession}
-              className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[0.7rem] font-medium text-slate-200 hover:border-red-500 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Clear chat
-            </button>
-          </div>
-        </header>
-
-        {/* Messages */}
-        <section className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      {/* Middle: big battle text box */}
+      <section className="flex-1 min-h-0 px-3 py-3">
+        <div className="h-full w-full border-[3px] border-black bg-[#f5f3e7] p-2 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-neutral-500 scrollbar-track-transparent">
           {messages.length === 0 && !isLoading && (
             <MessageBubble
               role="assistant"
-              content="Hey! I'm Pokepedai, your Pokédex-powered Pokémon assistant. Ask me about Pokémon, moves, types, teams, or anything else! ⚡"
+              content={"POKEPEDAI appeared!\nWhat will you ask?"}
             />
           )}
 
@@ -141,32 +106,33 @@ export default function ChatLayout() {
           ))}
 
           {isLoading && (
-            <div className="flex gap-2 items-center text-xs text-slate-400 px-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
-              Thinking…
+            <div className="text-[0.7rem] leading-snug">
+              <span className="font-bold">POKEPEDAI:</span> Thinking…
             </div>
           )}
           <div ref={messagesEndRef} />
-        </section>
+        </div>
+      </section>
 
-        {/* Input */}
-        <footer className="border-t border-slate-800 px-4 py-3">
+      {/* Bottom: command box with input */}
+      <footer className="px-3 pb-3">
+        <div className="w-full border-[3px] border-black bg-[#f5f3e7] p-2">
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-2 sm:flex-row sm:items-end"
           >
             <div className="relative flex-1">
               <textarea
-                className="block w-full resize-none rounded-2xl border border-slate-700 bg-slate-900/80 px-3 py-2 pr-12 text-sm text-slate-50 shadow-sm outline-none placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
+                className="block w-full resize-none bg-transparent text-[0.75rem] leading-snug outline-none pr-10"
                 rows={2}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about a Pokémon, move, type, item, or strategy..."
+                placeholder="FIGHT / ITEM / POKéMON / RUN ... (type your question)"
                 maxLength={500}
                 disabled={!initialized}
               />
-              <span className="pointer-events-none absolute bottom-2.5 right-3 text-[0.65rem] text-slate-500">
+              <span className="pointer-events-none absolute bottom-0 right-0 text-[0.6rem] text-neutral-500">
                 {input.length}/500
               </span>
             </div>
@@ -174,23 +140,17 @@ export default function ChatLayout() {
             <button
               type="submit"
               disabled={isLoading || !input.trim() || !initialized}
-              className="inline-flex items-center justify-center rounded-2xl bg-red-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-red-500/30 transition hover:bg-red-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
+              className="mt-1 inline-flex items-center justify-center border-[2px] border-black bg-[#e7e3d4] px-4 py-2 text-[0.7rem] font-bold uppercase tracking-[0.15em] shadow-[3px_3px_0_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none disabled:opacity-60 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-3 w-3 animate-spin rounded-full border-[2px] border-slate-900 border-t-transparent" />
-                  Sending…
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <span>Send</span>
-                  <span className="text-xs">↵</span>
-                </span>
-              )}
+              {isLoading ? "Sending…" : "Send"}
             </button>
           </form>
-        </footer>
-      </div>
+
+          <p className="mt-1 text-[0.55rem] uppercase tracking-[0.18em] text-neutral-600">
+            A = Send&nbsp;&nbsp;•&nbsp;&nbsp;B = New line
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

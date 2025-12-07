@@ -2,75 +2,62 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex items-center justify-center px-4 py-6">
-      <div className="max-w-3xl w-full space-y-10 text-center">
-        {/* Logo / Title */}
-        <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-2xl border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-200">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Online • Pokepedai Pokémon Chatbot</span>
-          </div>
+    <main className="min-h-screen bg-[#b8b3a0] flex items-center justify-center px-4 py-6">
+      <div className="max-w-3xl w-full border-[6px] border-black bg-[#f5f3e7] text-[#111111] shadow-[8px_8px_0_rgba(0,0,0,0.75)] p-6 font-mono">
+        <header className="border-b-[3px] border-black pb-3 mb-4 text-center">
+          <p className="text-[0.8rem] uppercase tracking-[0.25em]">
+            POKEPEDAI BATTLE SCREEN
+          </p>
+          <p className="mt-1 text-[0.65rem]">
+            Press START to begin your adventure.
+          </p>
+        </header>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight text-slate-50">
-            Chat with{" "}
-            <span className="text-yellow-400">Pokepedai</span>, your Pokémon
-            assistant
+        <div className="text-center mb-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2">
+            Pokepedai – Pokémon Chat
           </h1>
-
-          <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto">
-            Ask about Pokémon stats, moves, types, team building and more.
-            Pokepedai mixes Pokédex-style knowledge with a friendly chat
-            interface so it feels like talking to your own in-game guide.
+          <p className="text-[0.8rem] sm:text-sm max-w-2xl mx-auto">
+            Ask about Pokémon stats, moves, types, evolutions and strategies.
+            Pokepedai answers in a Pokédex-style chat, just like an old
+            handheld battle screen.
           </p>
         </div>
 
-        {/* Primary CTA */}
-        <div className="space-y-3">
+        <div className="flex flex-col items-center gap-3 mb-6">
           <Link
             href="/chat"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-6 py-3 text-sm sm:text-base font-semibold text-slate-950 shadow-lg shadow-red-500/30 transition hover:bg-red-400"
+            className="inline-flex items-center justify-center gap-2 border-[3px] border-black bg-[#e7e3d4] px-6 py-3 text-sm sm:text-base font-bold uppercase tracking-[0.18em] shadow-[4px_4px_0_rgba(0,0,0,0.8)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
           >
-            <span>Start a Poké-chat</span>
-            <span className="text-lg" aria-hidden>
-              ⚡
-            </span>
+            Start
           </Link>
-
-          <p className="text-[0.7rem] sm:text-xs text-slate-500">
-            No setup, no login – just open Pokepedai and start asking Pokémon
-            questions.
+          <p className="text-[0.65rem]">
+            A = Select&nbsp;&nbsp;•&nbsp;&nbsp;B = Back
           </p>
         </div>
 
-        {/* Feature highlights */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
-            <p className="text-sm font-medium text-slate-100">
-              Pokédex-style answers
-            </p>
-            <p className="text-xs text-slate-400">
-              Get clean explanations about abilities, moves, typings, evolutions
-              and more in plain language.
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[0.75rem]">
+          <div className="border-[3px] border-black bg-[#f0ecde] p-3">
+            <p className="font-bold mb-1">Pokédex answers</p>
+            <p>
+              Learn about abilities, typings, evolutions and more with clean,
+              in-world explanations.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
-            <p className="text-sm font-medium text-slate-100">
-              Pokémon chat icons
-            </p>
-            <p className="text-xs text-slate-400">
-              Give each conversation its own Pokémon avatar so your team
-              building, lore and meta chats stay easy to spot.
+          <div className="border-[3px] border-black bg-[#f0ecde] p-3">
+            <p className="font-bold mb-1">Chat icons</p>
+            <p>
+              Give each chat its own Pokémon portrait, like naming your party
+              slots.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
-            <p className="text-sm font-medium text-slate-100">
-              Built for trainers
-            </p>
-            <p className="text-xs text-slate-400">
-              Ask about matchups, movesets or casual questions – Pokepedai keeps
-              everything organized per chat.
+          <div className="border-[3px] border-black bg-[#f0ecde] p-3">
+            <p className="font-bold mb-1">Trainer friendly</p>
+            <p>
+              Talk about matchups, movesets or casual lore – one save file per
+              conversation.
             </p>
           </div>
         </div>
