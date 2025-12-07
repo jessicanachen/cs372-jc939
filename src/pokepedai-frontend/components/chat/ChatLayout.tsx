@@ -7,187 +7,190 @@ import { useChatSessions } from "@/hooks/useChatSessions";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 
 export default function ChatLayout() {
-    const {
-        initialized,
-        sessions,
-        activeSession,
-        activeSessionId,
-        input,
-        setInput,
-        isLoading,
-        handleSubmit,
-        handleKeyDown,
-        createNewSession,
-        selectSession,
-        clearActiveSession,
-        deleteSession,
-        updateSessionIcon,
-    } = useChatSessions();
+  const {
+    initialized,
+    sessions,
+    activeSession,
+    activeSessionId,
+    input,
+    setInput,
+    isLoading,
+    handleSubmit,
+    handleKeyDown,
+    createNewSession,
+    selectSession,
+    clearActiveSession,
+    deleteSession,
+    updateSessionIcon,
+  } = useChatSessions();
 
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
-    useAutoScroll(messagesEndRef, [activeSession?.messages, isLoading]);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  useAutoScroll(messagesEndRef, [activeSession?.messages, isLoading]);
 
-    const messages = activeSession?.messages ?? [];
+  const messages = activeSession?.messages ?? [];
 
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
-    const closeSidebar = () => setIsSidebarOpen(false);
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
-    return (
-        <div className="relative w-full max-w-4xl h-[80vh] flex rounded-3xl border border-slate-800 bg-slate-900/70 shadow-2xl backdrop-blur overflow-hidden">
-            {isSidebarOpen && (
-                <div
-                    className="fixed inset-0 z-20 bg-black/50"
-                    onClick={closeSidebar}
-                    aria-hidden="true"
+  return (
+    <div className="relative w-full max-w-4xl h-[80vh] flex rounded-3xl border border-slate-800 bg-slate-900/70 shadow-2xl backdrop-blur overflow-hidden">
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/50"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      <ChatSidebar
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSelectSession={(id) => {
+          selectSession(id);
+          closeSidebar();
+        }}
+        onNewSession={() => {
+          createNewSession();
+          closeSidebar();
+        }}
+        onDeleteSession={deleteSession}
+        onChangeIcon={updateSessionIcon}
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+      />
+
+      <div className="flex flex-1 flex-col min-w-0">
+        <header className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 hover:border-red-500 hover:text-red-300"
+              aria-label="Toggle chat list"
+              aria-pressed={isSidebarOpen}
+            >
+              <span className="sr-only">Toggle chat list</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                className="h-5 w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
                 />
-            )}
+              </svg>
+            </button>
 
-            <ChatSidebar
-                sessions={sessions}
-                activeSessionId={activeSessionId}
-                onSelectSession={(id) => {
-                    selectSession(id);
-                    closeSidebar();
-                }}
-                onNewSession={() => {
-                    createNewSession();
-                    closeSidebar();
-                }}
-                onDeleteSession={deleteSession}
-                onChangeIcon={updateSessionIcon}
-                isOpen={isSidebarOpen}
-                onClose={closeSidebar}
-            />
-
-            <div className="flex flex-1 flex-col min-w-0">
-                <header className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={toggleSidebar}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-500 hover:text-emerald-300"
-                            aria-label="Toggle chat list"
-                            aria-pressed={isSidebarOpen}
-                        >
-                            <span className="sr-only">Toggle chat list</span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                                className="h-5 w-5"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M4 6h16M4 12h16M4 18h16"
-                                />
-                            </svg>
-                        </button>
-
-                        <div className="h-9 w-9 rounded-2xl bg-slate-800 flex items-center justify-center text-xl">
-                            🤖
-                        </div>
-                        <div>
-                            <h1 className="text-sm font-semibold text-slate-50">
-                                Taco Parlicy Chatbot
-                            </h1>
-                            <p className="text-xs text-slate-400 flex items-center gap-1">
-                                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                Online • ready to chat
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                        <div className="hidden sm:flex items-center gap-2">
-                            <span>Press</span>
-                            <kbd className="rounded-md border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[0.65rem] font-medium">
-                                Enter
-                            </kbd>
-                            <span>to send</span>
-                            <span>•</span>
-                            <span>Shift + Enter = newline</span>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={clearActiveSession}
-                            disabled={!initialized || !activeSession}
-                            className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[0.7rem] font-medium text-slate-200 hover:border-red-500 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Clear chat
-                        </button>
-                    </div>
-                </header>
-
-                {/* Messages */}
-                <section className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                    {messages.length === 0 && !isLoading && (
-                        <MessageBubble
-                            role="assistant"
-                            content="Hey! I'm your friendly chatbot. Ask me anything to get started 🤖"
-                        />
-                    )}
-
-                    {messages.map((m) => (
-                        <MessageBubble key={m.id} role={m.role} content={m.content} />
-                    ))}
-
-                    {isLoading && (
-                        <div className="flex gap-2 items-center text-xs text-slate-400 px-2">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
-                            Thinking…
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                </section>
-
-                {/* Input */}
-                <footer className="border-t border-slate-800 px-4 py-3">
-                    <form
-                        onSubmit={handleSubmit}
-                        className="flex flex-col gap-2 sm:flex-row sm:items-end"
-                    >
-                        <div className="relative flex-1">
-                            <textarea
-                                className="block w-full resize-none rounded-2xl border border-slate-700 bg-slate-900/80 px-3 py-2 pr-12 text-sm text-slate-50 shadow-sm outline-none placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/50"
-                                rows={2}
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Ask a question or say hi..."
-                                maxLength={500}
-                                disabled={!initialized}
-                            />
-                            <span className="pointer-events-none absolute bottom-2.5 right-3 text-[0.65rem] text-slate-500">
-                                {input.length}/500
-                            </span>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading || !input.trim() || !initialized}
-                            className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
-                        >
-                            {isLoading ? (
-                                <span className="flex items-center gap-2">
-                                    <span className="h-3 w-3 animate-spin rounded-full border-[2px] border-slate-900 border-t-transparent" />
-                                    Sending…
-                                </span>
-                            ) : (
-                                <span className="flex items-center gap-2">
-                                    <span>Send</span>
-                                    <span className="text-xs">↵</span>
-                                </span>
-                            )}
-                        </button>
-                    </form>
-                </footer>
+            {/* Poké Ball–style logo */}
+            <div className="relative h-9 w-9 rounded-full border-2 border-slate-800 bg-gradient-to-b from-red-500 to-white flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-x-0 h-[2px] bg-slate-900" />
+              <div className="relative h-3 w-3 rounded-full border-[2px] border-slate-900 bg-slate-100" />
             </div>
-        </div>
-    );
+
+            <div>
+              <h1 className="text-sm font-semibold text-slate-50">
+                Pokepedai • Pokémon Chatbot
+              </h1>
+              <p className="text-xs text-slate-400 flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                Online • ask me anything about Pokémon
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <div className="hidden sm:flex items-center gap-2">
+              <span>Press</span>
+              <kbd className="rounded-md border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[0.65rem] font-medium">
+                Enter
+              </kbd>
+              <span>to send</span>
+              <span>•</span>
+              <span>Shift + Enter = newline</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={clearActiveSession}
+              disabled={!initialized || !activeSession}
+              className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[0.7rem] font-medium text-slate-200 hover:border-red-500 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Clear chat
+            </button>
+          </div>
+        </header>
+
+        {/* Messages */}
+        <section className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          {messages.length === 0 && !isLoading && (
+            <MessageBubble
+              role="assistant"
+              content="Hey! I'm Pokepedai, your Pokédex-powered Pokémon assistant. Ask me about Pokémon, moves, types, teams, or anything else! ⚡"
+            />
+          )}
+
+          {messages.map((m) => (
+            <MessageBubble key={m.id} role={m.role} content={m.content} />
+          ))}
+
+          {isLoading && (
+            <div className="flex gap-2 items-center text-xs text-slate-400 px-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-bounce" />
+              Thinking…
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </section>
+
+        {/* Input */}
+        <footer className="border-t border-slate-800 px-4 py-3">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-2 sm:flex-row sm:items-end"
+          >
+            <div className="relative flex-1">
+              <textarea
+                className="block w-full resize-none rounded-2xl border border-slate-700 bg-slate-900/80 px-3 py-2 pr-12 text-sm text-slate-50 shadow-sm outline-none placeholder:text-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/50"
+                rows={2}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about a Pokémon, move, type, item, or strategy..."
+                maxLength={500}
+                disabled={!initialized}
+              />
+              <span className="pointer-events-none absolute bottom-2.5 right-3 text-[0.65rem] text-slate-500">
+                {input.length}/500
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim() || !initialized}
+              className="inline-flex items-center justify-center rounded-2xl bg-red-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-red-500/30 transition hover:bg-red-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-3 w-3 animate-spin rounded-full border-[2px] border-slate-900 border-t-transparent" />
+                  Sending…
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <span>Send</span>
+                  <span className="text-xs">↵</span>
+                </span>
+              )}
+            </button>
+          </form>
+        </footer>
+      </div>
+    </div>
+  );
 }
