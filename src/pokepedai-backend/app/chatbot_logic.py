@@ -7,14 +7,23 @@ from openai import OpenAI
 from pathlib import Path
 from dotenv import load_dotenv
 
-from .chatbot_utils.utils import trim_history, format_history, build_context, extract_search_query
-from .chatbot_utils.prompt_provider import make_rewrite_with_history_prompt, make_sufficiency_prompt, make_refinement_prompt, make_answer_prompt
+from .chatbot_utils.utils import (
+    trim_history,
+    format_history,
+    build_context,
+    extract_search_query,
+)
+from .chatbot_utils.prompt_provider import (
+    make_rewrite_with_history_prompt,
+    make_sufficiency_prompt,
+    make_refinement_prompt,
+    make_answer_prompt,
+)
 
 logger = logging.getLogger(__name__)
 
 # env setup for api key
 ROOT_DIR = Path(__file__).resolve().parents[1]
-
 load_dotenv(ROOT_DIR / ".env")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -47,11 +56,12 @@ logger.info(
 embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 logger.info("Loaded sentence-transformer model all-MiniLM-L6-v2")
 
+
 def dense_search(query, top_k: int = 50, debug: bool = False):
-    '''
+    """
     Return top k document matches with RAG retrieval.
-    '''
-    logger.info("Running dense_search for query='%s' top_k=%d", query, top_k)
+    """
+    logger.info("[STEP] dense_search | query='%s'", query)
 
     try:
         q_vec = embed_model.encode([query], convert_to_tensor=False).astype("float32")
@@ -80,7 +90,7 @@ def dense_search(query, top_k: int = 50, debug: bool = False):
             pokemon = doc.get("pokemon", "Unknown")
             section = doc.get("section", "unknown-section")
             logger.debug(
-                "DENSE #%d | idx=%d | score=%.4f | [%s — %s] %s%s",
+                "[DEBUG] DENSE #%d | idx=%d | score=%.4f | [%s — %s] %s%s",
                 rank,
                 idx,
                 score,
@@ -94,9 +104,11 @@ def dense_search(query, top_k: int = 50, debug: bool = False):
 
 
 def rewrite_query_with_history(query, history, debug: bool = False):
-    '''
+    """
     First chatbot, rewrites query with context to be input into RAG.
-    '''
+    """
+    logger.info("[STEP] rewrite_query_with_history | query='%s'", query)
+
     if history is None:
         history = []
 
@@ -106,20 +118,36 @@ def rewrite_query_with_history(query, history, debug: bool = False):
     prompt = make_rewrite_with_history_prompt(convo, query)
 
     try:
-        logger.debug("Rewriting query with history")
         response = client.responses.create(
             model="gpt-4.1-mini",
             input=prompt,
         )
-        rewritten = response.output_text.strip()
-        logger.info("Rewrote query for retrieval: %s", rewritten)
+        rewritten = (response.output_text or "").strip()
+        logger.info(
+            "[STEP] rewrite_query_with_history_done | rewritten_query='%s'", rewritten
+        )
+        if debug:
+            logger.debug(
+                "[DEBUG] rewrite_query_with_history | original='%s' rewritten='%s'",
+                query,
+                rewritten,
+            )
         return rewritten
     except Exception:
-        logger.exception("Error while rewriting query; falling back to original query")
+        logger.exception(
+            "Error while rewriting query; falling back to original query"
+        )
         return query
 
+
 def sufficiency(query, context, debug: bool = False):
+    """
+    Ask the model if the current context is sufficient to answer the query.
+    """
+    logger.info("[STEP] sufficiency_check | query='%s'", query)
+
     suff_prompt = make_sufficiency_prompt(query, context)
+    suff_text = ""
 
     try:
         suff_resp = client.responses.create(
@@ -129,8 +157,15 @@ def sufficiency(query, context, debug: bool = False):
         suff_text = (suff_resp.output_text or "").strip()
     except Exception:
         logger.exception("RCR: sufficiency check failed")
+        # If sufficiency check fails, treat as not sufficient so we keep looping.
+        return False
 
-    logger.debug("RCR sufficiency response: %s", suff_text)
+    if debug:
+        logger.debug(
+            "[DEBUG] sufficiency_check | query='%s' response='%s'",
+            query,
+            suff_text,
+        )
 
     upper = suff_text.upper()
     if upper.startswith("YES"):
@@ -138,7 +173,13 @@ def sufficiency(query, context, debug: bool = False):
 
     return False
 
-def refinement(context, current_query, debug):
+
+def refinement(context, current_query, debug: bool = False):
+    """
+    Ask the model how to refine the search query given the current context.
+    """
+    logger.info("[STEP] refinement | query='%s'", current_query)
+
     refine_prompt = make_refinement_prompt(context, current_query)
 
     try:
@@ -146,22 +187,39 @@ def refinement(context, current_query, debug):
             model="gpt-4.1-mini",
             input=refine_prompt,
         )
-        return (refine_resp.output_text or "").strip()
+        refine_text = (refine_resp.output_text or "").strip()
+
+        if debug:
+            logger.debug(
+                "[DEBUG] refinement | current_query='%s' refine_text='%s'",
+                current_query,
+                refine_text,
+            )
+
+        return refine_text
     except Exception:
         logger.exception("RCR: refinement step failed")
+        return None
 
-def answer(context, query, debug):
+
+def answer(context, query, debug: bool = False):
+    """
+    Final answer generation using the retrieved context.
+    """
+    logger.info("[STEP] answer_generation | query='%s'", query)
+
+    if debug:
+        logger.debug("[DEBUG] answer_generation context: %s", context)
+
     prompt = make_answer_prompt(context, query)
 
-    print(context)
     try:
-        logger.info("Calling OpenAI model for generation")
         response = client.responses.create(
             model="gpt-4.1-mini",
             input=prompt,
         )
         reply = response.output_text
-        logger.info("Successfully generated model reply")
+        logger.info("[STEP] answer_generation_done | query='%s'", query)
         return reply
     except Exception:
         logger.exception("OpenAI generation failed")
@@ -170,21 +228,23 @@ def answer(context, query, debug):
             "Please try again shortly."
         )
 
+
 def recursive_dense_retrieval(
     query: str,
     max_loops: int = 4,
     k: int = 8,
     debug: bool = False,
 ):
-    logger.info(
-        "Starting recursive_dense_retrieval for initial_query='%s'",
-        query,
-    )
+    logger.info("[STEP] RCR_start | initial_query='%s'", query)
 
     current_query = query
 
     for loop in range(1, max_loops + 1):
-        logger.debug("RCR loop %d with query='%s'", loop, current_query)
+        logger.info(
+            "[STEP] RCR_loop | loop=%d | query='%s'",
+            loop,
+            current_query,
+        )
 
         # retrieve chunks
         results = dense_search(
@@ -195,56 +255,59 @@ def recursive_dense_retrieval(
 
         context = build_context(results)
 
-        logger.debug(
-            "RCR loop %d retrieved document results.",
-            loop
-        )
-
-        print(context)
+        if debug:
+            logger.debug(
+                "[DEBUG] RCR_loop | loop=%d | context=%s",
+                loop,
+                context,
+            )
 
         sufficient = sufficiency(current_query, context, debug)
-        if sufficient: 
+        if sufficient:
             logger.info(
-                "RCR: stopping at loop %d - model judged context sufficient", loop
+                "[STEP] RCR_stop_sufficient | loop=%d | query='%s'",
+                loop,
+                current_query,
             )
             break
-        
 
         refine_text = refinement(context, current_query, debug)
         new_query = extract_search_query(refine_text)
 
-        logger.debug(
-            "RCR loop %d refinement -> new query='%s'", loop, new_query
-        )
+        if debug:
+            logger.debug(
+                "[DEBUG] RCR_refinement_result | loop=%d | new_query='%s'",
+                loop,
+                new_query,
+            )
 
         if not new_query or new_query == current_query:
             logger.info(
-                "RCR: refinement did not change the query on loop %d; stopping.", loop
+                "[STEP] RCR_stop_unchanged | loop=%d | query='%s'",
+                loop,
+                current_query,
             )
             break
 
         current_query = new_query
 
-    logger.info(
-        "RCR complete:"
-    )
+    logger.info("[STEP] RCR_complete | final_query='%s'", current_query)
 
     return current_query
-
 
 
 def answer_with_rag(query, history=None, k: int = 8, debug: bool = False):
     if history is None:
         history = []
 
-    logger.info("answer_with_rag called with query='%s'", query)
+    logger.info("[STEP] answer_with_rag_start | query='%s'", query)
 
     # Step 1: take context and rewrite query to be a self contained context
-    rag_query = rewrite_query_with_history(query=query, history=history)
+    rag_query = rewrite_query_with_history(query=query, history=history, debug=debug)
 
-    # Step 2: try recurse
+    # Step 2: try recursive retrieval
     try:
-        query = recursive_dense_retrieval(
+        final_query = recursive_dense_retrieval(
             query=rag_query,
             max_loops=4,
             k=k,
@@ -252,12 +315,19 @@ def answer_with_rag(query, history=None, k: int = 8, debug: bool = False):
         )
 
         results = dense_search(
-            query=query,
+            query=final_query,
             top_k=k,
             debug=debug,
         )
 
         context = build_context(results)
+
+        if debug:
+            logger.debug(
+                "[DEBUG] answer_with_rag | final_query='%s' context=%s",
+                final_query,
+                context,
+            )
     except Exception:
         logger.exception(
             "Retrieval (RCR) failed for query='%s' (rewritten='%s')",
@@ -269,4 +339,5 @@ def answer_with_rag(query, history=None, k: int = 8, debug: bool = False):
             "Please try again in a moment."
         )
 
-    return answer(context, query, debug)
+    logger.info("[STEP] answer_with_rag_answer | query='%s'", final_query)
+    return answer(context, final_query, debug)
