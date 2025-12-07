@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import MessageBubble from "./MessageBubble";
 import ChatSidebar from "./ChatSidebar";
 import { useChatSessions } from "@/hooks/useChatSessions";
@@ -29,23 +29,65 @@ export default function ChatLayout() {
 
     const messages = activeSession?.messages ?? [];
 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+    const closeSidebar = () => setIsSidebarOpen(false);
+
     return (
-        <div className="w-full max-w-4xl h-[80vh] flex rounded-3xl border border-slate-800 bg-slate-900/70 shadow-2xl backdrop-blur overflow-hidden">
-            {/* Sidebar with chat list */}
+        <div className="relative w-full max-w-4xl h-[80vh] flex rounded-3xl border border-slate-800 bg-slate-900/70 shadow-2xl backdrop-blur overflow-hidden">
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 z-20 bg-black/50"
+                    onClick={closeSidebar}
+                    aria-hidden="true"
+                />
+            )}
+
             <ChatSidebar
                 sessions={sessions}
                 activeSessionId={activeSessionId}
-                onSelectSession={selectSession}
-                onNewSession={createNewSession}
+                onSelectSession={(id) => {
+                    selectSession(id);
+                    closeSidebar();
+                }}
+                onNewSession={() => {
+                    createNewSession();
+                    closeSidebar();
+                }}
                 onDeleteSession={deleteSession}
                 onChangeIcon={updateSessionIcon}
+                isOpen={isSidebarOpen}
+                onClose={closeSidebar}
             />
 
-            {/* Main chat column */}
             <div className="flex flex-1 flex-col min-w-0">
-                {/* Header */}
                 <header className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
                     <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={toggleSidebar}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-500 hover:text-emerald-300"
+                            aria-label="Toggle chat list"
+                            aria-pressed={isSidebarOpen}
+                        >
+                            <span className="sr-only">Toggle chat list</span>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                                className="h-5 w-5"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M4 6h16M4 12h16M4 18h16"
+                                />
+                            </svg>
+                        </button>
+
                         <div className="h-9 w-9 rounded-2xl bg-slate-800 flex items-center justify-center text-xl">
                             🤖
                         </div>
@@ -84,11 +126,10 @@ export default function ChatLayout() {
 
                 {/* Messages */}
                 <section className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                    {/* One-time greeting when current session is empty */}
                     {messages.length === 0 && !isLoading && (
                         <MessageBubble
                             role="assistant"
-                            content="Hey! I’m your friendly chatbot. Ask me anything to get started 🤖"
+                            content="Hey! I'm your friendly chatbot. Ask me anything to get started 🤖"
                         />
                     )}
 
