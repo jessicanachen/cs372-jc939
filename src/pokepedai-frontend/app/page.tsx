@@ -15,7 +15,7 @@ export default function HomePage() {
 
         <div className="text-center mb-6">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2">
-            Pokepedai – Pokémon Chat
+            Pokepedai - Pokémon Chat
           </h1>
           <p className="text-[0.8rem] sm:text-sm max-w-2xl mx-auto">
             Ask about Pokémon stats, moves, types, evolutions and strategies.
@@ -31,9 +31,6 @@ export default function HomePage() {
           >
             Start
           </Link>
-          <p className="text-[0.65rem]">
-            A = Select&nbsp;&nbsp;•&nbsp;&nbsp;B = Back
-          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[0.75rem]">
@@ -56,7 +53,7 @@ export default function HomePage() {
           <div className="border-[3px] border-black bg-[#f0ecde] p-3">
             <p className="font-bold mb-1">Trainer friendly</p>
             <p>
-              Talk about matchups, movesets or casual lore – one save file per
+              Talk about matchups, movesets or casual lore - one save file per
               conversation.
             </p>
           </div>

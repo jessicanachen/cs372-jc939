@@ -147,7 +147,7 @@ export default function ChatLayout() {
           </form>
 
           <p className="mt-1 text-[0.55rem] uppercase tracking-[0.18em] text-neutral-600">
-            A = Send&nbsp;&nbsp;•&nbsp;&nbsp;B = New line
+            Enter = Send&nbsp;&nbsp;•&nbsp;&nbsp;Shift + Enter = New line
           </p>
         </div>
       </footer>
