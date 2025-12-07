@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, MouseEvent } from "react";
 import {
   PokemonEntry,
   searchPokemon,
@@ -42,8 +42,16 @@ export default function ChatIconPicker({
     setOpen(false);
   };
 
+  const stopSidebarClose = (e: MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="relative mr-2">
+    <div
+      className="relative mr-2"
+      onClick={stopSidebarClose}
+      onMouseDown={stopSidebarClose}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -56,9 +64,11 @@ export default function ChatIconPicker({
             className="h-6 w-6 border-[2px] border-black bg-[#e7e3d4] object-contain"
           />
         ) : (
-          <span className="h-6 w-6 border-[2px] border-black bg-[#e7e3d4] flex items-center justify-center text-[0.6rem]">
-            PKMN
-          </span>
+          <img
+            src={dexToImageUrl(1)}
+            alt={currentLabel}
+            className="h-6 w-6 border-[2px] border-black bg-[#e7e3d4] object-contain"
+          />
         )}
       </button>
 
