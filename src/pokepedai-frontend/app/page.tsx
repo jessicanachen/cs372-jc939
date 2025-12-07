@@ -6,10 +6,7 @@ export default function HomePage() {
       <div className="max-w-3xl w-full border-[6px] border-black bg-[#f5f3e7] text-[#111111] shadow-[8px_8px_0_rgba(0,0,0,0.75)] p-6 font-mono">
         <header className="border-b-[3px] border-black pb-3 mb-4 text-center">
           <p className="text-[0.8rem] uppercase tracking-[0.25em]">
-            POKEPEDAI BATTLE SCREEN
-          </p>
-          <p className="mt-1 text-[0.65rem]">
-            Press START to begin your adventure.
+            POKEPEDAI
           </p>
         </header>
 
@@ -19,8 +16,6 @@ export default function HomePage() {
           </h1>
           <p className="text-[0.8rem] sm:text-sm max-w-2xl mx-auto">
             Ask about Pokémon stats, moves, types, evolutions and strategies.
-            Pokepedai answers in a Pokédex-style chat, just like an old
-            handheld battle screen.
           </p>
         </div>
 
@@ -37,24 +32,21 @@ export default function HomePage() {
           <div className="border-[3px] border-black bg-[#f0ecde] p-3">
             <p className="font-bold mb-1">Pokédex answers</p>
             <p>
-              Learn about abilities, typings, evolutions and more with clean,
-              in-world explanations.
+              Learn about abilities, typings, evolutions and more.
             </p>
           </div>
 
           <div className="border-[3px] border-black bg-[#f0ecde] p-3">
             <p className="font-bold mb-1">Chat icons</p>
             <p>
-              Give each chat its own Pokémon portrait, like naming your party
-              slots.
+              Give each chat its own Pokémon portrait.
             </p>
           </div>
 
           <div className="border-[3px] border-black bg-[#f0ecde] p-3">
-            <p className="font-bold mb-1">Trainer friendly</p>
+            <p className="font-bold mb-1">Conversation sessions</p>
             <p>
-              Talk about matchups, movesets or casual lore - one save file per
-              conversation.
+              Save different conversations in its own session.
             </p>
           </div>
         </div>

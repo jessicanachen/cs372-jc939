@@ -74,10 +74,7 @@ export default function ChatLayout() {
 
         <div className="flex flex-col items-center leading-none">
           <span className="text-xs font-bold tracking-[0.25em]">
-            POKEPEDAI BATTLE SCREEN
-          </span>
-          <span className="mt-1 text-[0.6rem] normal-case tracking-normal">
-            What will you ask?
+            POKEPEDAI 
           </span>
         </div>
 
@@ -97,7 +94,7 @@ export default function ChatLayout() {
           {messages.length === 0 && !isLoading && (
             <MessageBubble
               role="assistant"
-              content={"POKEPEDAI appeared!\nWhat will you ask?"}
+              content={"How can I assist you?"}
             />
           )}
 
@@ -128,7 +125,7 @@ export default function ChatLayout() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="FIGHT / ITEM / POKéMON / RUN ... (type your question)"
+                placeholder="Type your question"
                 maxLength={500}
                 disabled={!initialized}
               />
