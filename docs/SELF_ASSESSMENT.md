@@ -1,10 +1,6 @@
 # Self Assessment
 
-[TODO] when done with the project link to the exact lines you are talking about, but for now just say where it would be
-
 ## Machine Learning
-
-I included 75 points, just cause I am not too sure if I did a RAG system, if I can also include semantic similarity and retrieval.
 
 #### 1. Completed project individually without a partner (10 pts)
 
@@ -16,49 +12,54 @@ The data sets can be found in [/data](../data) and the documented methodology ca
 
 For a brief synopsis, the constructed original dataset is the [rag-chunks](../data/rag/json-data/rag-chunks.zip) that are used in retrieval for my RAG system. 
 
-The information gathered was done through **web scraping**, however the final output was more than just a dump of the web scraped results. The chunks were constructed through parsing of the information using html DOM traversal, and then formating that information in a specify way to be better for retrieval and appear in natural language form (**custom curation**).
+The information gathered was done through **web scraping** [PokemonDB](
+https://pokemondb.net), however the final output was more than just a dump of the web scraped results. The chunks were constructed through parsing of the information using html DOM traversal, and then formating that information in a specify way to be better for retrieval and appear in natural language form (**custom curation**).
 
 #### 3. Built retrieval-augmented generation (RAG) system with document retrieval (e.g., from a static dataset/database, or from dynamic web search/scraping) and generation components (10 pts)
 
-This is done in [chatbot_logic](../src/pokepedai-backend/app/chatbot_logic.py).
+The main implementation of how the chatbot answers is through a RAG system. This is done in [chatbot_logic](../src/pokepedai-backend/app/chatbot_logic.py).
 
-The function `dense_search` does document retrieval from the dataset described in the rubric item above, and the function `answer` uses this context in its generation components.
+The function `dense_search` (line 60) does document retrieval from the from the static dataset created in the rubric item above, and the function `answer` (line 205) uses this context in its generation components.
 
 (While there is a recursive RAG implementation, the base RAG implementation can be seen from just the interaction of these two functions.)
 
 #### 4. Deployed model as functional web application with user interface (10 pts)
 
-Here is the [web app](https://cs372-jc939.vercel.app), sending a chat in the UI calls the model.
+Here is the [web app](https://cs372-jc939.vercel.app). The website provides a functional web applification with a user interface to interact with the deployed backend chat logic. 
 
 #### 5. Implemented production-grade deployment (evidence of at least two considerations such as rate limiting, caching, monitoring, error handling, logging) (10 pts)
 
 **Rate Limiting**
 
-Rate limiting, implemented in this file [rate_limiter](../src/pokepedai-backend/app/rate_limiter.py) and then applied in main.py applies rate limiting per IP address currently to 10 limits within a sliding window of 60 seconds. Since this is hard to verify by testing, since it is hard to send 10 within 60 seconds, I set the limit to 1 in 60 seconds to test.
+Rate limiting, is implemented in this file [rate_limiter](../src/pokepedai-backend/app/rate_limiter.py) and then applied in [main.py (line 127)](../src/pokepedai-backend/app/main.py). The current setup applies rate limiting per IP address currently to 10 limits within a sliding window of 60 seconds. Since this is hard to verify by testing, since it is hard to send 10 within 60 seconds, I set the limit to 1 in 60 seconds to demonstrate it working.
 
 ![Rate Limiting](../photos/rate_limiting.png)
 
 **Logging**
 
-The next one is logging, logging is implemented in the backend, you can see this through the creation of logs and the calls to log. You can see the logs both when you test locally, but most importantly these logs also show up in monitoring on the running backend.
+The next one is logging, logging is implemented throughout the backend. The setup from logging is found in [main.py (line 15, 81)](../src/pokepedai-backend/app/main.py) and an example of calling it within the chatbot logic can be found in [chatbot_logic (line 64, 70, 82)](../src/pokepedai-backend/app/chatbot_logic.py). 
 
-[TODO] get the photo of the logs from google cloud monitoring.
+The logging is at two levels, info which simply prints which step of the process it is at, and debug (which only prints if debug = True) which contains more in depth information in what is happening during each step.
+
+You can see the logs both when you run locally, but also in the deployed backend monitoring.
+
+![Logging](../photos/logging.png)
 
 **Error Handling**
 
-Errors are handled gracefully in the frontend and logged in the backend. This adheres with standard production grade deployment where you want errors to be recognized but not break things.
+Errors are handled gracefully in the frontend in [useChatSession (line 169-177)](../src/pokepedai-frontend/hooks/useChatSessions.ts) and logged in the backend (ex. [chatbot_logic (line 70)](../src/pokepedai-backend/app/chatbot_logic.py)). This adheres with standard production grade deployment where you want errors to be recognized but not break things.
 
-[TODO] give lines in frontend in backend
-[TODO] give picture of graceful failing
-
+![Error Handling](../photos/error_handling.png)
 
 #### 6. Built multi-turn conversation system with context management and history tracking (7 pts)
 
-Conversations are not only saved per session, but also across sessions and chats on the frontend. [TODO] code.
+Conversations are not only saved per session, but also across sessions and chats on the frontend. This is handled by [useChatSessions](../src/pokepedai-frontend/hooks/useChatSessions.ts)
 
-While I am aware in typical production context management and history tracking would not be stored in the frontend on local strage but rather managed by an intermediary database, due to the scale of the project, I think this setup still shows substantial effort as all the logic applying to context management and history tracking would be the same with this database, however how storage is called and added to would be different.
+While typically conversations should not be stored in the frontend, but rather managed by an intermediary database, due to the scale of the project, caching on the frontend should be sufficient. 
 
-We can see this also implemted in the backend through [chatbot_logic](../src/pokepedai-backend/app/chatbot_logic.py)'s `rewrite_query_with_history`.
+Additionally, I believe this still shows substantial effort as all the logic applying to content management and history tracking would be the same if I did use a database. The only thing that would change is in retrieving message history and adding message history, it would have to send a request to the database instead.
+
+Lastly, we can see the integration of multi-turn conversation in the backend in [chatbot_logic's `rewrite_query_with_history` (line 106)](../src/pokepedai-backend/app/chatbot_logic.py).
 
 This allows the backend to consider history when answering the question.
 
@@ -66,29 +67,27 @@ Note: while typically in the final `answer` generation would provide the chat co
 
 #### 7. Made API calls to state-of-the-art model (GPT-4, Claude, Gemini) with meaningful integration into your system (5 pts)
 
-Theres 4 of them and they all play a meaningful integration into the system. 
+In this project, I made API calls to GPT's model for example in [chatbot_logic's `rewrite_query_with_history` (line 106)](../src/pokepedai-backend/app/chatbot_logic.py). Additionally, calls are also made in `sufficient`, `rewrite`, and `answer`.
 
-answer: this does the generative portion of the rag model
-
-rewrite_query_with_history: this makes the query consider multi-turn conversation info
-
-sufficient: this is used to check if the query can be asnwered by the retrieved documents
-
-refinement: this updates the prompt based on chunk information
-
-All of these play an important role in how the RAG model works.
+These all play a meaningful integration into the system.
+- rewrite_query_with_history: This query calls the GPT model to rewrite the user question with the context so the question can be a standalone content.
+- sufficient: This query calls the GPT model to determine if the given retrieval is enough to answer the question.
+- refinement: This query uses the model to rewrite the prompt based on new chunk information if possible.
+- answer: This query generates the response based on the returned documentation.
 
 #### 8. Modular code design with reusable functions and classes rather than monolithic scripts (3 pts)
 
-All code in notebooks, backend, and frontend are functions/classes and not monolithic scripts.
+All code in notebooks, backend, and frontend are functions/classes and not monolithic scripts. Take [chatbot_logic](../src/pokepedai-backend/app/chatbot_logic.py) for example. It's core methods (i.e. doing document retrieval, making API calls) are in their own functions, and util functions such as constructing the prompt or history context are found in util functions and then imported into the logic.
 
 #### 9. Used sentence embeddings for semantic similarity or retrieval (5 pts)
 
-Sentence embeddings are used to encode the document for rags [TODO] encodign notebook line, and then to encode the query [TODO], then used for retrieval [TODO]
+Sentence embeddings are used to encode each RAG chunk in [PokemonDocEncoder](../notebooks/PokemonDocEncoder.ipynb), and then to encode the query in [chatbot_logic (line 67)](../src/pokepedai-backend/app/chatbot_logic.py). Lastly, for retrieval, semantic similarity is compared in [chatbot_logic's `dense_search` (line 60)](../src/pokepedai-backend/app/chatbot_logic.py).
 
 #### 10. Applied in-context learning with few short examples or chain of thought prompting (5 pts)
 
-See any of the prompts in prompt provider 
+In-context learning as well as chain of thought prompting can be seen in the [prompt for sufficiency](../src/pokepedai-backend/app/chatbot_utils/prompt_provider.py). On lines 51-66 we can see the 3 examples of the task, and in the answer of these examples we can see the chain of thought prompting.
+
+Total: 75
 
 ## Following Directions
 
@@ -111,14 +110,12 @@ Total: 20 pts
 - README clearly articulates a single, unified project goal or research question (3 pts)
 - Project demo video effectively communicates why the project matters to a non-technical audience in non-technical terms (3 pts)
 - Project addresses a real-world problem or explores a meaningful research question (3 pts)
-  - All 3 of these articulate one purpose stemming from 1 motivation. As mentioned in the demo video the reason why this project matters is because of [TODO]. Thus, the purpose of this project, is to address this existing problem through [TODO]
-
+  - All 3 of these articulate one purpose stemming from 1 motivation. As mentioned in the demo video the reason why this project matters is because of how much information is necessary in order to play Pokemon games, players often amass many tabs and have to search throughout different websites during their game play. Thus, the purpose of this project, is to address this existing problem to centralize in one location answers to these questions.
 - Technical walkthrough demonstrates how components work together synergistically (not just isolated experiments) (3 pts)
 - Project shows clear progression from problem → approach → solution → evaluation (3 pts)
 - Design choices are explicitly justified in videos or documentation (3 pts)
 - None of the major components awarded rubric item credit in the machine learning category are superfluous to the larger goals of the project (no unrelated "point collecting") (3 pts)
-  - The technical walkthrough show cases how the components work together to solve the problem, design choices are justified in the video and if not in the video extra documentation can be found [here](../docs/DESIGN_CHOICES.md), in this document can also see how coices regarding points in the ML were made to either solve the problem, or problems that arose throughout development.
-
+  - The technical walkthrough show cases how the components work together to solve the problem, design choices are justified in the video and if not in the video extra documentation can be found [here](../docs/DESIGN_CHOICES.md), in this document can also see how choices regarding points in the ML were made to either solve the central problem or problems that arose throughout development.
 - Clean codebase with readable code and no extraneous, stale, or unused files (3 pts)
 
 Total: 24 pts (Though would be capped at 20)

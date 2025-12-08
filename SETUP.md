@@ -7,6 +7,8 @@ The easiest way to test the system is to test the deployment on the web app. Thi
 The web app can be accessed here: https://cs372-jc939.vercel.app
 You can also directly access and call the backend endpoints directly here: https://pokepedai-backend-api-405120827006.us-east1.run.app/docs (docs gives you a way to call the chat endpoint inside the web without having to curl/call it with some other application).
 
+Just a note about timing, for this project, the default amount of containers allocated to running the backend is 0, thus on first query, 
+
 ## Testing the System - Locally
 
 Unfortunately, local deployment will require you to have an open ai api key. The only additional thing you have to do is in the root make a new file called `.env` with the single line `OPENAI_API_KEY=sk-proj-` with the API key. (This has to be done in order to keep the project compliant with basic security. If a api key cannot be provided the deployment still provides a way to test the system in general.)

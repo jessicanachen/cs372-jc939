@@ -32,7 +32,6 @@ What does <Ability> do?
 What moves does <Pokemon> learn by level-up?
 What TMs can <Pokemon> learn?
 Can <Pokemon> learn <Move>?
-Which Pokemon can learn <Move>?
 When does <Pokemon> learn <Move>?
 
 What are <Pokemon>'s weaknesses?
@@ -44,7 +43,7 @@ Which Pokemon appear in <Location> in <Game>?
 Which Pokemon are version exclusives in <Game>?
 
 What egg group is <Pokemon>?
-Which Pokemon share an egg group with <Pokemon>?
+Does <Pokemon> share an egg group with <Pokemon>?
 Can <Pokemon> breed?
 ```
 
@@ -75,10 +74,3 @@ There are 3 main formats for one of these chunks:
 For the most part, information was web scraped, cleaned, and then automatically created using the script found [here](../notebooks/PokemonScraper.ipynb). This was done by using BeautifulSoup to get the raw html of the necessary page, then traversing the DOM structure to retrieve the information. This information was then converted to a standard natural language form and built into the RAG chunks as described above.
 
 However, in the case of game mechanic information as well as the type matchups charts, due to the nature of the game mechanic information being text not formated in a standard manner as other urls (aka if I made a dom element retrieval for these pages, I would have to make a unique one for each ones), these RAG chunks were made manually without a script.
-
-
-## Fine Tuning Data
-
-The second data set that needs to be created are those used to fine tune the mode.
-
-[TODO]
